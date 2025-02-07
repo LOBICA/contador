@@ -27,9 +27,6 @@ build-backend = "poetry.core.masonry.api"
 profile = "black"
 
 [tool.pytest.ini_options]
-addopts = "--cov=assistant"
-testpaths = "assistant"
+addopts = "--cov=contador"
+testpaths = "tests"
 asyncio_mode = "auto"
-
-[tool.coverage.run]
-omit = [ "assistant/tests/*" ]

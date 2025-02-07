@@ -1,9 +1,10 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Generic, TypeVar
+from typing import Dict, Generic, Optional, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
+from pydantic_core import core_schema
 
 
 class Entity(BaseModel):
@@ -17,6 +18,10 @@ class Collection(Dict[str, EntityType], Generic[EntityType]):
     def add(self, entity: EntityType):
         self[entity.uuid.hex] = entity
 
+    @classmethod
+    def __get_pydantic_core_schema__(cls, source_type, handler):
+        return core_schema.no_info_after_validator_function(cls, handler(dict))
+
 
 class Payee(Entity):
     name: str
@@ -25,13 +30,13 @@ class Payee(Entity):
 class Entry(Entity):
     amount: Decimal
     account: "Account"
-    transaction: "Transaction" | None = None
+    transaction: Optional["Transaction"] = None
 
 
 class Account(Entity):
     name: str
     initial_balance: Decimal = 0
-    book: "Book" | None = None
+    book: Optional["Book"] = None
     entries: Collection["Entry"] = {}
 
     def __init__(self, *args, **kwargs):
@@ -54,8 +59,8 @@ class Account(Entity):
 class Transaction(Entity):
     date: datetime
     description: str
-    payee: Payee | None = None
-    book: "Book" | None = None
+    payee: Optional[Payee] = None
+    book: Optional["Book"] = None
     entries: Collection["Entry"] = {}
     documents: Collection["Document"] = {}
 
