@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Dict, Generic, Optional, TypeVar
+from typing import Annotated, Dict, Generic, Optional, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -14,13 +14,18 @@ class Entity(BaseModel):
 EntityType = TypeVar("EntityType", bound=Entity)
 
 
-class Collection(Dict[str, EntityType], Generic[EntityType]):
+class CollectionType(Dict[str, EntityType], Generic[EntityType]):
     def add(self, entity: EntityType):
         self[entity.uuid.hex] = entity
 
     @classmethod
     def __get_pydantic_core_schema__(cls, source_type, handler):
         return core_schema.no_info_after_validator_function(cls, handler(dict))
+
+
+Collection = Annotated[
+    CollectionType[EntityType], Field(default_factory=CollectionType, exclude=True)
+]
 
 
 class Payee(Entity):
@@ -35,9 +40,9 @@ class Entry(Entity):
 
 class Account(Entity):
     name: str
-    initial_balance: Decimal = 0
+    initial_balance: Decimal = Decimal(0.0)
     book: Optional["Book"] = None
-    entries: Collection["Entry"] = {}
+    entries: Collection["Entry"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,8 +66,8 @@ class Transaction(Entity):
     description: str
     payee: Optional[Payee] = None
     book: Optional["Book"] = None
-    entries: Collection["Entry"] = {}
-    documents: Collection["Document"] = {}
+    entries: Collection["Entry"]
+    documents: Collection["Document"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -86,14 +91,14 @@ class Document(Entity):
     number: str
     type_: str
     book: "Book"
-    transactions: Collection[Transaction] = {}
+    transactions: Collection[Transaction]
 
 
 class Book(Entity):
     name: str
     period: str
-    accounts: Collection[Account] = {}
-    transactions: Collection[Transaction] = {}
+    accounts: Collection[Account]
+    transactions: Collection[Transaction]
 
     def add_account(self, account: Account):
         self.accounts.add(account)
