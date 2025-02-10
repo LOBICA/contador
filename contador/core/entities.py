@@ -1,10 +1,12 @@
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, getcontext
 from typing import Annotated, Dict, Generic, Iterable, Optional, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 from pydantic_core import core_schema
+
+getcontext().prec = 4
 
 
 class Entity(BaseModel):
