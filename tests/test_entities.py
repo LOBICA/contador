@@ -1,7 +1,7 @@
 from decimal import Decimal
 from uuid import uuid4
 
-from contador import entities
+from contador.core import entities
 
 
 def test_create_book():

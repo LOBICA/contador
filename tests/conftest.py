@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 from pytest import fixture
 
-from contador import entities
+from contador.core import entities
+from contador.core.manager import AccountManager
 
 
 @fixture
@@ -28,5 +31,14 @@ def transaction(book, payee) -> entities.Transaction:
 @fixture
 def document(book) -> entities.Document:
     return entities.Document(
-        date="2021-01-01", number="123", type_="invoice", book=book
+        date="2021-01-01",
+        number="123",
+        type_="invoice",
+        amount=Decimal(100.0),
+        book=book,
     )
+
+
+@fixture
+def account_manager(book) -> AccountManager:
+    return AccountManager(book)

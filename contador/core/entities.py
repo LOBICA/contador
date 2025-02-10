@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Annotated, Dict, Generic, Optional, TypeVar
+from typing import Annotated, Dict, Generic, Iterable, Optional, TypeVar
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -24,7 +24,8 @@ class CollectionType(Dict[str, EntityType], Generic[EntityType]):
 
 
 Collection = Annotated[
-    CollectionType[EntityType], Field(default_factory=CollectionType, exclude=True)
+    CollectionType[EntityType],
+    Field(default_factory=CollectionType, exclude=True, repr=False),
 ]
 
 
@@ -60,11 +61,18 @@ class Account(Entity):
         self.entries.add(entry)
         return entry
 
+    def credit(self, amount: Decimal) -> Entry:
+        """Take money out of the account"""
+        return self.add_entry(-1 * amount)
+
+    def debit(self, amount: Decimal) -> Entry:
+        """Put money into the account"""
+        return self.add_entry(amount)
+
 
 class Transaction(Entity):
     date: datetime
     description: str
-    payee: Optional[Payee] = None
     book: Optional["Book"] = None
     entries: Collection["Entry"]
     documents: Collection["Document"]
@@ -79,7 +87,7 @@ class Transaction(Entity):
         if total != 0:
             raise ValueError("Entries are unbalanced")
 
-    def add_entries(self, entries: list["Entry"]):
+    def add_entries(self, entries: Iterable[Entry]):
         for entry in entries:
             self.entries.add(entry)
             entry.transaction = self
@@ -90,6 +98,10 @@ class Document(Entity):
     date: datetime
     number: str
     type_: str
+    amount: Decimal
+    tax_amount: Decimal = Decimal(0.0)
+    payee: Optional[Payee] = None
+    location: Optional[str] = None
     book: "Book"
     transactions: Collection[Transaction]
 
